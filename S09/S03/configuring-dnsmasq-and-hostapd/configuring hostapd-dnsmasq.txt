@@ -1,0 +1,8 @@
+ifconfig
+
+sudo ifconfig wlan0 10.0.0.1/24
+sudo ifconfig wlan0 netmask 255.255.255.0
+
+route -n
+route add default gw 10.0.0.1
+

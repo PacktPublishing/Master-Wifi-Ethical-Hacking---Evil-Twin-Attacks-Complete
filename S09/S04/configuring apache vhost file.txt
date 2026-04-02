@@ -1,0 +1,14 @@
+Edit 
+
+/etc/apache2/sites-available/000-default.conf
+
+add this:
+
+       <Directory /var/www/html>
+           FallbackResource "/index.php"
+        </Directory>
+
+
+
+(Optional)
+create connecttest.txt in /var/www/html with content: LOGIN REQUIRED

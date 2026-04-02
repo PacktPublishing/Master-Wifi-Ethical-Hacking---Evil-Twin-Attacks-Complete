@@ -1,0 +1,50 @@
+After installing fluxion, your Alfa AWUS036ACH (Realtek driver) might fail to load when you do this:
+
+	sudo modprobe 88XXau
+
+and you get this error:
+
+	modprobe: FATAL: Module 88XXau not found in directory /lib/modules/6.12.25-amd64
+
+This happens because when you upgraded the system for the fluxion, it broke the previous driver for Realtek.
+So we need to rebuild and install again. The kernel headers are missing and that is why it broke.
+
+Check kernel headers:
+
+	dpkg -l | grep headers-$(uname -r)
+
+If nothing returned, your headers were removed, so we need to reinstall them as follows:
+
+	sudo apt update
+	sudo apt install linux-headers-$(uname -r)
+
+Then purge all previous drivers for Realtek:
+
+	sudo apt purge realtek-rtl88xxau-dkms -y
+	sudo apt autoremove -y
+
+And reinstall:
+
+	sudo apt install realtek-rtl88xxau-dkms
+
+Do:
+    iwconfig
+
+and you should see wlan0 and wlan1
+
+If you still don't see your wifi interfaces, try:
+	sudo modprobe mt76x2u, for the mediatek driver and
+	sudo modprobe 88XXau,  for the realtek driver.
+
+And if still not showing, try:
+(1) pulling out the usb wifi adapter and reinsert, or,
+(2) rebooting, kali, or rebooting windows 11 host. 
+
+You may need to retry the above steps multiple times. 
+Once you get both wifi interface showing, take a snapshot of the virtual machine.
+
+
+
+
+
+

@@ -1,0 +1,140 @@
+To install Fluxion, cd /opt then:
+
+	sudo git clone https://github.com/FluxionNetwork/fluxion.git
+
+Next:
+  	cd fluxion
+	sudo ./fluxion.sh -i
+
+You might get errors with Kali Linux 2024.3 onwards. Below are the errors I get:
+
+
+
+"Error: Failed to fetch http://http.kali.org/kali/pool/main/p/php8.2/php8.2-readline_8.2.27-1_amd64.deb  404  Not Found [IP: 54.39.128.230 80]
+Error: Failed to fetch http://http.kali.org/kali/pool/main/p/php8.2/php8.2-opcache_8.2.27-1_amd64.deb  404  Not Found [IP: 54.39.128.230 80]
+Error: Failed to fetch http://http.kali.org/kali/pool/main/p/php8.2/php8.2-mysql_8.2.27-1_amd64.deb  404  Not Found [IP: 54.39.128.230 80]
+Error: Failed to fetch http://http.kali.org/kali/pool/main/p/php8.2/libapache2-mod-php8.2_8.2.27-1_amd64.deb  404  Not Found [IP: 54.39.128.230 80]
+Error: Failed to fetch http://http.kali.org/kali/pool/main/p/php8.2/php8.2-cli_8.2.27-1_amd64.deb  404  Not Found [IP: 54.39.128.230 80]
+Error: Failed to fetch http://http.kali.org/kali/pool/main/p/php8.2/php8.2-common_8.2.27-1_amd64.deb  404  Not Found [IP: 54.39.128.230 80]
+Error: Failed to fetch http://http.kali.org/kali/pool/main/p/php8.2/php8.2-cgi_8.2.27-1_amd64.deb  404  Not Found [IP: 54.39.128.230 80]
+Error: Failed to fetch http://http.kali.org/kali/pool/main/p/php-defaults/php-cgi_8.2%2b93%2bnmu1_all.deb  404  Not Found [IP: 54.39.128.230 80]
+Error: Failed to fetch http://http.kali.org/kali/pool/main/p/php8.2/php8.2_8.2.27-1_all.deb  404  Not Found [IP: 54.39.128.230 80]
+Error: Unable to fetch some archives, maybe run apt-get update or try with --fix-missing?"
+
+
+
+
+What the error really means
+```````````````````````````
+
+404 Not Found for a long list of php8.2-*.deb files almost always indicates that your local APT package index is older than the mirror you’re downloading from. The index still points to version 8.2.27-1, but Kali-rolling has already moved on (right now the repo holds PHP 8.3.x). When Fluxion’s installer runs apt-get install …, APT asks the mirror for the old files and gets a 404.
+
+This is a standard Kali/Debian “mirror drift” problem, not a bug in Fluxion. A quick refresh of the package lists (and optionally a full upgrade) fixes it — then Fluxion will happily pull whichever PHP version is current.
+
+
+-----------------------------------
+
+To solve the errors, do these steps:
+	
+	sudo apt-get clean
+	sudo rm -rf /var/lib/apt/lists/*
+	sudo apt update
+	sudo apt full-upgrade -y
+	apt policy php-cgi php-common php-mysql php-opcache php-readline
+        sudo ./flusion.sh -i
+
+Why the extra rm -rf /var/lib/apt/lists/*? 
+```````````````````````````````````````````
+It forces APT to throw away every cached index, eliminating the chance it will reuse an outdated file. 
+
+
+After doing the above, you might still get this error when running sudo ./fluxion.sh -i:
+
+
+
+"Package php-cgi is not available, but is referred to by another package.
+This may mean that the package is missing, has been obsoleted, or
+is only available from another source
+
+Error: Package 'php-cgi' has no installation candidate
+
+Dependency installation failed!
+Press enter to retry, ctrl+c to exit..."
+
+
+Why Fluxion can’t find php-cgi even though it exists
+````````````````````````````````````````````````````
+
+php-cgi is still in Kali-rolling. It’s a meta-package in php-defaults that now pulls in the current runtime (php8.4-cgi).
+When APT says “Package ‘php-cgi’ has no installation candidate” it means your package index is still pointing at an older snapshot or at a mirror that’s out of sync. Fluxion’s installer just calls apt-get -y install php-cgi …; if APT can’t resolve the name, the loop you’re seeing is triggered.
+
+
+To solve this new error, make sure your sources really point at kali-rolling:
+
+
+	sudo nano /etc/apt/sources.list
+
+The active (non-commented) line should be exactly:
+
+	deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
+
+
+Then do:
+
+	sudo rm -rf /var/lib/apt/lists/*
+	sudo apt update
+
+And you will get new errors:
+
+"Get:1 http://mirror.aktkn.sg/kali kali-rolling InRelease [41.5 kB]
+Err:1 http://mirror.aktkn.sg/kali kali-rolling InRelease
+  The following signatures couldn't be verified because the public key is not available: NO_PUBKEY ED65462EC8D5E4C5
+Warning: GPG error: http://mirror.aktkn.sg/kali kali-rolling InRelease: The following signatures couldn't be verified because the public key is not available: NO_PUBKEY ED65462EC8D5E4C5
+Error: The repository 'http://http.kali.org/kali kali-rolling InRelease' is not signed.
+Notice: Updating from such a repository can't be done securely, and is therefore disabled by default.
+Notice: See apt-secure(8) manpage for repository creation and user configuration details.
+Notice: Repository 'Kali Linux' changed its 'firmware component' value from 'non-free' to 'non-free-firmware'
+Notice: More information about this can be found online at: https://www.kali.org/blog/non-free-firmware-transition/"
+
+
+What does the new errors mean?
+``````````````````````````````
+
+Kali rolled a brand-new repository signing key in April 2025.
+Until you import that key, any apt update will fail with exactly the GPG error you’re seeing (NO_PUBKEY ED65462EC8D5E4C5) and every tool that shells out to APT (Fluxion’s installer included) will keep looping. At the same time, Kali (like Debian 12) moved its firmware packages into a new archive component called non-free-firmware. If that component is missing from your /etc/apt/sources.list, you’ll get the “repository changed its firmware component” warning that follows the key error.
+
+
+To fix it, import the new archive key (one-liner):
+
+	sudo wget -q -O /usr/share/keyrings/kali-archive-keyring.gpg https://archive.kali.org/archive-keyring.gpg
+
+This drops a fresh keyring file that contains both the old key (ED444FF…) and the new key (ED65462E…). After that, APT can verify signatures again.
+
+You can verify the keyring:
+
+	sha1sum /usr/share/keyrings/kali-archive-keyring.gpg
+	gpg --no-default-keyring --keyring /usr/share/keyrings/kali-archive-keyring.gpg -k
+
+Then, ensure you have the correct canonical mirror:
+
+	echo "deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware" | sudo tee /etc/apt/sources.list
+
+Followed by:
+
+	sudo apt clean
+	sudo rm -rf /var/lib/apt/lists/*
+	sudo apt update
+	sudo apt full-upgrade -y
+
+Then check the the PHP CGI binary is available:
+
+	apt-cache policy php-cgi | grep Candidate
+
+Then install it:
+
+	sudo apt install php8.4-cgi php8.4-cli php8.4-common php8.4-mysql php8.4-opcache php8.4-readline
+
+Finally, start fluxion:
+
+	sudo ./fluxion.sh -i
+

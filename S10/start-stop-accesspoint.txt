@@ -1,0 +1,31 @@
+sudo airmon-ng check kill
+sudo airmon-ng start wlan0
+
+sudo ifconfig wlan0 10.0.0.1/24
+
+route add default gw 10.0.0.1
+
+route -n
+
+sudo dnsmasq -C dnsmasq.conf
+
+sudo hostapd hostapd.conf
+
+sudo service apache2 start
+
+netstat -tan
+
+Stopping:
+sudo service hostapd stop
+sudo service dnsmasq stop
+sudo service apache2 stop
+sudo service rpcbind stop   
+sudo killall dnsmasq
+sudo killall hostapd
+
+netstat -tan
+
+
+Restart Internet:
+sudo service NetworkManager restart
+sudo service wpa_supplicant restart

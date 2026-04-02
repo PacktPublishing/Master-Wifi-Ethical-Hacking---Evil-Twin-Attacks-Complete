@@ -1,0 +1,25 @@
+Important Notes on Evil Twin Attacks in WiFi Ethical Hacking
+
+Single Adapter Limitation:The Alfa AWUS036ACH (Realtek driver) cannot be used simultaneously to host a Fake Access Point (AP) and perform a Deauthentication Attack. If you attempt both actions with a single WiFi adapter, you may encounter errors such as:
+
+"The interface wlan0 you have already selected is not supporting VIF (Virtual Interface). This attack needs it to virtually unfold itself to create the fake access point while also performing denial of service (DoS)."
+
+This happens because the attack requires a Virtual Interface (VIF) to function properly, which the Realtek driver does not support in this context.
+
+Optimal Setup for Successful Evil Twin Attack:To successfully perform an Evil Twin Attack, it's recommended to have:
+
+Wifi Adapter 1:  to host the Fake Access Point.
+
+Wifi Adapter 2 : to execute Deauthentication Attacks against the target.
+
+Wifi Adapter Adapter Options:
+
+Alfa AWUS036NHA (Atheros driver) does support Virtual Interfaces (VIF), allowing it to both host an Access Point and perform Deauthentication. However, it is limited to 2.4 GHz only and does not support the 5 GHz band.
+
+Alfa AWUS036ACH (Realtek driver) and Alfa AWUS036ACM (Mediatek driver) support both 2.4 GHz and 5 GHz bands but cannot simultaneously handle a Fake AP and Deauthentication due to VIF limitations.
+
+AWUS036ACM (Mediatek driver) can only do packet injection at 2.4GHz band  but cannot do packet injection at 5GHz band. Therefore it cannot do deauth attack and Captive Portals at 5GHz band can only do passive-scanning at 5GHz band. However, if you are only targetting 2.4GHz, then it works fine.
+
+Summary:
+
+For optimal performance and reliability, try to  use either  two separate PCs each with its own wifi adapter, or, one single PC but using two wifi adapters that can handle 2.4GHz and 5 GHz.  For example, you could be using Alfa AWUS036ACH (Realtek driver)  for captive portal and using Alfa AWUS036ACM (Mediatek driver) for deauth attack.

